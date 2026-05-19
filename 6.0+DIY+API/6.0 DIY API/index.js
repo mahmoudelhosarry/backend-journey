@@ -15,15 +15,70 @@ app.get("specific", (req, res) => {
   res.json(jokes[req.body.id]);
 });
 //3. GET a jokes by filtering on the joke type
+app.get("/filter", (req, res) => {
+  const type = req.body.type;
+  const filteredJokes = jokes.filter((joke) => joke.jokeType === type);
+  res.json(filteredJokes);
+});
+
 //4. POST a new joke
-
+app.post("/jokes", (req, res) => {
+  const newJoke = {
+    id: jokes.length + 1,
+    jokeText: req.body.text,
+    jokeType: req.body.type,
+  };
+  jokes.push(newJoke);
+  console.log(jokes.slice(-1));
+  res.json(newJoke);
+});
 //5. PUT a joke
+app.put("/jokes/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const replacementJoke = {
+    id: id,
+    jokeText: req.body.text || jokes[id].jokeText,
+    jokeType: req.body.type || jokes[id].jokeType,
+  };
 
+  const searchIndex = jokes.findIndex((joke) => joke.id === id);
+
+  jokes[searchIndex] = replacementJoke;
+  // console.log(jokes);
+  res.json(replacementJoke);
+});
 //6. PATCH a joke
+app.patch("/jokes/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const existingJoke = jokes.find((joke) => joke.id === id);
+  const replacementJoke = {
+    id: id,
+    jokeText: req.body.text || existingJoke.jokeText,
+    jokeType: req.body.type || existingJoke.jokeType,
+  };
+  const searchIndex = jokes.findIndex((joke) => joke.id === id);
+  jokes[searchIndex] = replacementJoke;
+  console.log(jokes[searchIndex]);
+  res.json(replacementJoke);
+});
 
 //7. DELETE Specific joke
+app.delete("/jokes/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const searchJoke = jokes.findIndex((joke) => joke.id === id);
+  if (searchJoke > -1) {
+    jokes.splice(searchJoke, 1);
+    res.json({ message: `Joke with id: ${id} has been deleted` });
+  } else {
+    res.json({ message: `Joke with id: ${id} not found` });
+  }
+});
 
 //8. DELETE All jokes
+app.delete("/all", (req, res) => {
+  jokes = [];
+  res.json({ message: `All jokes have been deleted` });
+});
 
 app.listen(port, () => {
   console.log(`Successfully started server on port ${port}.`);
