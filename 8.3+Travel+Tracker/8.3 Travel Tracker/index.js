@@ -23,20 +23,31 @@ app.get("/", async (req, res) => {
 });
 app.post("/add", async (req, res) => {
   const input = req.body["country"];
-  const result = await db.query(
-    "SELECT country_code FROM countries WHERE country_name = $1",
-    [input],
-    console.log(result),
-  );
-
-  if (result.rows.length !== 0) {
+  try {
+    const result = await db.query(
+      "SELECT country_code FROM countries WHERE LOWER(country_name) = $1",
+      [input],
+    );
     const data = result.rows[0];
     const countryCode = data.country_code;
-
-    await db.query("INSERT INTO visited_countries (country_code) VALUES ($1)", [
-      countryCode,
-    ]);
-    res.redirect("/");
+    try {
+      await db.query(
+        "INSERT INTO visited_countries (country_code) VALUES ($1)",
+        [countryCode],
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  } catch (error) {
+    console.log(error.message);
+    const result = await db.query("SELECT * FROM visited_countries");
+    const countries = result.rows.map((x) => x.country_code);
+    const total = result.rows.length;
+    res.render("index.ejs", {
+      error: "Country not found, try again.",
+      countries: countries,
+      total: total,
+    });
   }
 });
 
