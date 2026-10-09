@@ -77,25 +77,48 @@ app.post("/add", async (req, res) => {
     console.log(err);
   }
 });
+
 app.post("/user", async (req, res) => {
-  currentUserId = req.body.user;
+  if (req.body.add === "new") {
+    // إذا ضغط المستخدم على Add Family Member نعرض له صفحة new.ejs
 
-  const countries = await checkVisisted();
-
-  const currentUser = await getCurrentUser();
-  console.log(currentUser);
-
-  res.render("index.ejs", {
-    countries: countries,
-    total: countries.length,
-    users: users,
-    color: currentUser.color,
-  });
+    res.render("new.ejs");
+  } else {
+    // إذا اختار مستخدم موجود، نأخذ الـ id ونحدث الـ currentUserId
+    currentUserId = req.body.user;
+    const visited_countries = await checkVisisted();
+    const user = await getCurrentUser();
+    // ونعيد توجيهه للصفحة الرئيسية التي ستجلب بياناته وتحدث الخريطة
+    res.render("index.ejs", {
+      countries: visited_countries,
+      total: visited_countries.length,
+      users: users,
+      color: user.color,
+    });
+  }
 });
 
 app.post("/new", async (req, res) => {
-  //Hint: The RETURNING keyword can return the data that was inserted.
-  //https://www.postgresql.org/docs/current/dml-returning.html
+  const { name, color } = req.body;
+
+  try {
+    // 1. نضيف RETURNING * عشان ترجع بيانات العضو بعد الإضافة
+    const result = await db.query(
+      "INSERT INTO users (name, color) VALUES ($1, $2) RETURNING *;",
+      [name, color],
+    );
+
+    // 2. نستخرج الـ id الجديد
+    const id = result.rows[0].id;
+
+    // 3. نحدد العضو الجديد كـ currentUserId
+    currentUserId = id;
+
+    // 4. نرجع للصفحة الرئيسية
+    res.redirect("/");
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 app.listen(port, () => {
