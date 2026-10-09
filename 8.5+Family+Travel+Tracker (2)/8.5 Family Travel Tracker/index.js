@@ -107,6 +107,7 @@ app.post("/new", async (req, res) => {
       "INSERT INTO users (name, color) VALUES ($1, $2) RETURNING *;",
       [name, color],
     );
+    console.log(result.rows[0].id);
 
     // 2. نستخرج الـ id الجديد
     const id = result.rows[0].id;
